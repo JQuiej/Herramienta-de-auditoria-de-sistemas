@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Herramienta de Auditoria de Seguridad</title>
+<style>
+  :root {
+    --bg: #0d1219; --panel: #151d28; --panel-2: #1a2431; --entrada: #0f1620;
+    --linea: #263140; --linea-2: #2f3d4e;
+    --tinta: #dbe3ee; --tinta-2: #aeb9c7; --gris: #7d8b9c;
+    --azul: #3b82f6; --azul-2: #2f6fe0; --cyan: #38bdf8; --azul-suave: #16263f;
+    --ok: #34d399;
+    --critico: #ef4444; --alto: #f59e0b; --medio: #eab308; --bajo: #22c55e; --info: #64748b;
+    --term-bg: #080b10; --term-linea: #121923;
+    --radio: 12px; --sombra: 0 8px 30px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: 'Segoe UI', system-ui, Arial, sans-serif; background: var(--bg);
+         color: var(--tinta); line-height: 1.5; }
+
+  .hero { background: linear-gradient(135deg, #0b1420 0%, #16233a 100%);
+          border-bottom: 1px solid var(--linea); padding: 26px 20px 30px; }
+  .hero-in { max-width: 920px; margin: 0 auto; display: flex; align-items: center; gap: 16px; }
+  .marca-logo { flex: 0 0 auto; width: 44px; height: 44px; border-radius: 11px;
+                background: linear-gradient(135deg, var(--azul), var(--cyan));
+                display: flex; align-items: center; justify-content: center;
+                font-weight: 800; font-size: 18px; color: #04121f; letter-spacing: -1px; }
+  .hero h1 { margin: 0; font-size: 22px; letter-spacing: .2px; color: #fff; }
+  .hero p { margin: 5px 0 0; font-size: 13.5px; color: var(--tinta-2); }
+
+  main { max-width: 920px; margin: 22px auto 70px; padding: 0 20px; }
+
+  .card { background: var(--panel); border: 1px solid var(--linea); border-radius: var(--radio);
+          box-shadow: var(--sombra); padding: 22px 24px; margin-bottom: 18px; }
+  .card > .head { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
+  .paso { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px;
+          background: var(--azul-suave); color: var(--cyan); border: 1px solid var(--linea-2);
+          display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
+  .head h2 { margin: 0; font-size: 17px; color: #fff; }
+  .head .sub { font-size: 12.5px; color: var(--gris); margin-top: 2px; }
+
+  label.campo { display: block; font-size: 13px; font-weight: 600; color: var(--tinta); margin: 16px 0 6px; }
+  .hint { font-size: 12px; color: var(--gris); font-weight: 400; }
+  input[type=text], input[type=url], input[type=number], input[type=password] {
+    width: 100%; padding: 11px 13px; border: 1.5px solid var(--linea-2); border-radius: 9px; font-size: 14px;
+    background: var(--entrada); transition: border-color .15s, box-shadow .15s; color: var(--tinta); }
+  input::placeholder { color: #566173; }
+  input:focus { outline: none; border-color: var(--azul); background: #0c141f;
+                box-shadow: 0 0 0 3px rgba(59,130,246,.22); }
+  .dos-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+  @media (max-width: 620px) { .dos-col { grid-template-columns: 1fr; } }
+
+  .auth { margin-top: 18px; display: flex; align-items: center; gap: 13px; padding: 14px 16px;
+          border: 1.5px solid var(--linea-2); border-radius: 11px; background: var(--panel-2); transition: all .15s; }
+  .auth.on { border-color: var(--ok); background: #10241d; }
+  .switch { position: relative; flex: 0 0 auto; width: 46px; height: 26px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; cursor: pointer; background: #3a4658; border-radius: 26px; transition: .2s; }
+  .slider::before { content: ""; position: absolute; height: 20px; width: 20px; left: 3px; top: 3px;
+                    background: #dfe6ef; border-radius: 50%; transition: .2s; }
+  .switch input:checked + .slider { background: var(--ok); }
+  .switch input:checked + .slider::before { transform: translateX(20px); background: #04140d; }
+  .auth .txt { font-size: 13.5px; font-weight: 600; }
+  .auth .txt small { display: block; font-weight: 400; color: var(--gris); font-size: 12px; margin-top: 2px; }
+
+  .guia { font-size: 12.5px; color: var(--tinta-2); background: var(--panel-2); border: 1px solid var(--linea);
+          border-left: 3px solid var(--cyan); border-radius: 9px; padding: 10px 13px; margin-bottom: 16px; }
+  .guia b { color: var(--tinta); }
+
+  .seg { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+  .seg button { flex: 1 1 auto; min-width: 150px; border: 1.5px solid var(--linea-2); background: var(--panel-2);
+                color: var(--tinta); border-radius: 10px; padding: 12px; font-size: 13px; font-weight: 600;
+                cursor: pointer; transition: all .15s; text-align: left; }
+  .seg button:hover { border-color: var(--azul); }
+  .seg button.activo { background: var(--azul-suave); color: #fff; border-color: var(--azul); }
+  .seg button .p-desc { display: block; font-weight: 400; font-size: 11.5px; color: var(--gris); margin-top: 3px; }
+  .seg button.activo .p-desc { color: var(--tinta-2); }
+
+  details.mods, details.avz { margin-top: 16px; border-top: 1px solid var(--linea); padding-top: 14px; }
+  summary { cursor: pointer; font-size: 13.5px; color: var(--cyan); font-weight: 600; list-style: none;
+            display: flex; align-items: center; gap: 9px; }
+  summary::-webkit-details-marker { display: none; }
+  .chev { width: 0; height: 0; border-left: 6px solid var(--cyan); border-top: 5px solid transparent;
+          border-bottom: 5px solid transparent; transition: transform .2s; }
+  details[open] > summary .chev { transform: rotate(90deg); }
+  .grupo-etq { font-size: 11px; text-transform: uppercase; letter-spacing: .7px; color: var(--gris);
+               font-weight: 700; margin: 16px 2px 8px; }
+  .mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .tile { border: 1.5px solid var(--linea-2); border-radius: 11px; padding: 12px 13px; cursor: pointer;
+          background: var(--panel-2); transition: all .15s; }
+  .tile:hover { border-color: var(--azul); }
+  .tile.sel { border-color: var(--azul); background: var(--azul-suave); }
+  .tile.off { opacity: .5; cursor: not-allowed; }
+  .tile .fila1 { display: flex; align-items: center; gap: 9px; }
+  .tile .marca { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #47566a;
+                 display: flex; align-items: center; justify-content: center; font-size: 12px; color: #04121f;
+                 font-weight: 800; background: transparent; }
+  .tile.sel .marca { background: var(--cyan); border-color: var(--cyan); }
+  .tile .nom { font-size: 13px; font-weight: 600; color: var(--tinta); }
+  .tile .desc { font-size: 11.5px; color: var(--gris); margin: 6px 0 0; }
+  .tile .req { font-size: 10.5px; color: var(--alto); font-weight: 600; margin-top: 6px; }
+
+  .accion { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .btn-run { background: linear-gradient(135deg, var(--azul), var(--azul-2)); color: #fff; border: none;
+             border-radius: 11px; padding: 13px 26px; font-size: 15px; font-weight: 700; cursor: pointer;
+             display: inline-flex; align-items: center; gap: 10px; transition: filter .15s; }
+  .btn-run:hover:not(:disabled) { filter: brightness(1.1); }
+  .btn-run:disabled { background: #38455a; color: #9aa7b6; cursor: default; }
+  .spinner { width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,.35); border-top-color: #fff;
+             border-radius: 50%; animation: giro .7s linear infinite; display: none; }
+  @keyframes giro { to { transform: rotate(360deg); } }
+  .prog-wrap { flex: 1; min-width: 160px; }
+  .prog-bar { height: 8px; background: #212c3a; border-radius: 6px; overflow: hidden; }
+  .prog-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--azul), var(--cyan)); transition: width .35s; }
+  .prog-txt { font-size: 12.5px; color: var(--gris); margin-top: 6px; }
+
+  /* Consola estilo terminal */
+  .term-cab { display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: var(--term-linea);
+              border: 1px solid var(--linea); border-bottom: none; border-radius: 11px 11px 0 0; }
+  .term-cab .punto { width: 11px; height: 11px; border-radius: 50%; }
+  .term-cab .r { background: #ff5f56; } .term-cab .y { background: #ffbd2e; } .term-cab .g { background: #27c93f; }
+  .term-cab .tit { margin-left: 8px; font-size: 12px; color: var(--gris); font-family: 'Consolas', monospace; }
+  .consola { background: var(--term-bg); border: 1px solid var(--linea); border-radius: 0 0 11px 11px;
+             font-family: 'Consolas', 'Courier New', monospace; font-size: 12.5px; line-height: 1.65;
+             padding: 14px 16px; height: 250px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+  .consola .ln { display: block; }
+  .consola .ts { color: #4b5a6e; }
+  .consola .cmd { color: var(--cyan); font-weight: 600; }
+  .consola .info { color: #9db4d0; }
+  .consola .run { color: #e9c46a; }
+  .consola .ok { color: var(--ok); }
+  .consola .err { color: #ff6b6b; }
+  .consola .done { color: #7ee787; font-weight: 700; }
+  .consola .dim { color: #5a6a7d; }
+  .cursor { color: var(--cyan); animation: parpadeo 1s step-end infinite; }
+  @keyframes parpadeo { 50% { opacity: 0; } }
+
+  .vacio { text-align: center; color: var(--gris); padding: 26px 12px; font-size: 13.5px; }
+  .cards-sev { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 4px 0 16px; }
+  @media (max-width: 560px) { .cards-sev { grid-template-columns: repeat(3, 1fr); } }
+  .sevcard { border-radius: 11px; padding: 14px 8px; text-align: center; color: #fff;
+             border: 1px solid rgba(255,255,255,.08); }
+  .sevcard .n { font-size: 27px; font-weight: 800; line-height: 1; }
+  .sevcard .t { font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; margin-top: 6px; opacity: .96; }
+  .sevcard.Critica { background: #3a1620; color: #ff6b6b; border-color: #5a2230; }
+  .sevcard.Alta { background: #3a2a12; color: #f5b041; border-color: #5a4020; }
+  .sevcard.Media { background: #34310f; color: #e9d24b; border-color: #524d1c; }
+  .sevcard.Baja { background: #123020; color: #4ade80; border-color: #1e4a34; }
+  .sevcard.Informativa { background: #1c2530; color: #9fb0c2; border-color: #2c3948; }
+  .sevcard.apagada { opacity: .4; }
+  .riesgo-linea { font-size: 13.5px; color: var(--tinta-2); margin: 0 0 14px; }
+  .riesgo-linea b { color: #fff; }
+
+  .desc-bar { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 16px; }
+  .btn-desc { display: inline-flex; align-items: center; gap: 9px; border: 1.5px solid var(--azul);
+              background: transparent; color: var(--cyan); border-radius: 10px; padding: 11px 18px; font-size: 13.5px;
+              font-weight: 600; cursor: pointer; transition: all .15s; }
+  .btn-desc:hover:not(:disabled) { background: var(--azul-suave); }
+  .btn-desc:disabled { color: #5f6c7c; border-color: #34424f; cursor: default; }
+  .btn-desc .ic { width: 15px; height: 17px; flex: 0 0 auto; border: 1.6px solid currentColor; border-radius: 2px;
+                  position: relative; }
+  .btn-desc .ic::after { content: ""; position: absolute; left: 3px; right: 3px; top: 4px; height: 1.6px;
+                         background: currentColor; box-shadow: 0 4px 0 currentColor, 0 8px 0 currentColor; }
+
+  .filtros { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin: 4px 0 12px; }
+  .filtros .etq { font-size: 12px; color: var(--gris); }
+  .fbtn { border: 1.5px solid var(--linea-2); background: var(--panel-2); border-radius: 16px; padding: 5px 12px;
+          font-size: 12px; cursor: pointer; color: var(--tinta-2); }
+  .fbtn:hover { border-color: var(--azul); }
+  .fbtn.activo { background: var(--azul); color: #fff; border-color: var(--azul); }
+
+  .tabla-wrap { border: 1px solid var(--linea); border-radius: 11px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); }
+  th, td { padding: 10px 12px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--linea); color: var(--tinta); }
+  th { background: var(--panel-2); color: var(--tinta-2); font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px; }
+  tbody tr:last-child td { border-bottom: none; }
+  tr.click { cursor: pointer; } tr.click:hover { background: #1a2534; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #04121f; }
+  .badge.Critica { background: var(--critico); color: #fff; } .badge.Alta { background: var(--alto); }
+  .badge.Media { background: var(--medio); } .badge.Baja { background: var(--bajo); }
+  .badge.Informativa { background: var(--info); color: #fff; }
+
+  #detalle { background: var(--panel-2); border: 1px solid var(--linea); border-left: 4px solid var(--azul);
+             border-radius: 11px; padding: 18px 20px; margin-top: 14px; font-size: 13.5px; display: none; }
+  #detalle h3 { margin: 0 0 10px; font-size: 16px; color: #fff; }
+  #detalle .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  #detalle .kv { font-size: 12px; background: #101a26; border: 1px solid var(--linea); border-radius: 6px;
+                 padding: 4px 9px; color: var(--tinta-2); }
+  #detalle .bloque { margin-top: 9px; white-space: pre-wrap; line-height: 1.55; color: var(--tinta); }
+
+  /* Pestañas superiores */
+  .tabs { max-width: 920px; margin: 18px auto -4px; padding: 0 20px; display: flex; gap: 8px; }
+  .tab { padding: 10px 18px; border: 1px solid var(--linea); border-bottom: none;
+         border-radius: 11px 11px 0 0; background: var(--panel-2); color: var(--tinta-2);
+         cursor: pointer; font-size: 14px; font-weight: 600; transition: all .15s; }
+  .tab:hover { color: var(--tinta); }
+  .tab.activa { background: var(--panel); color: #fff; border-color: var(--linea-2);
+                box-shadow: 0 -2px 10px rgba(0,0,0,.2); }
+  .tab .pill { font-size: 10px; background: linear-gradient(135deg, var(--azul), var(--cyan));
+               color: #04121f; padding: 1px 7px; border-radius: 9px; margin-left: 6px; font-weight: 800; }
+  /* Bloques del análisis IA */
+  .ia-box { background: var(--panel-2); border: 1px solid var(--linea); border-radius: 11px;
+            padding: 16px 18px; margin-top: 14px; }
+  .ia-box h3 { margin: 0 0 8px; font-size: 15px; color: var(--cyan); }
+  .ia-box ul { margin: 6px 0 0; padding-left: 20px; }
+  .ia-box li { margin: 4px 0; }
+  .ia-ruta { border-left: 3px solid var(--alto); padding: 8px 12px; margin: 8px 0;
+             background: var(--entrada); border-radius: 0 8px 8px 0; }
+  .ia-ruta .grav { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--alto); }
+  .ia-esperando { color: var(--gris); font-size: 13px; }
+  .badge-modulo { display: inline-block; font-size: 11px; background: var(--azul-suave); color: var(--cyan);
+                  border: 1px solid var(--linea-2); border-radius: 8px; padding: 2px 8px; margin: 2px; }
+
+  /* ===== Animaciones ===== */
+  @keyframes lnin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes shimmer { to { background-position: 200% 0; } }
+  @keyframes pulso { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.0); }
+                    50% { box-shadow: 0 0 14px 1px rgba(239,68,68,.55); } }
+  @keyframes popsev { 0% { transform: scale(.7); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+
+  /* Cada línea nueva de consola entra con un pequeño deslizamiento. */
+  .consola .ln { animation: lnin .16s ease-out; }
+  /* Barra de progreso con brillo en movimiento. */
+  .prog-fill { background: linear-gradient(90deg, var(--azul), var(--cyan), var(--azul));
+               background-size: 200% 100%; animation: shimmer 1.5s linear infinite; }
+  /* Estados "ejecutando" parpadean suavemente. */
+  .consola .run { animation: pulso 1.2s ease-in-out infinite; }
+  /* Tarjetas y cajas aparecen con fundido. */
+  .ia-box { animation: aparecer .3s ease-out; }
+  .sevcard { animation: popsev .35s cubic-bezier(.3,1.4,.5,1) both; }
+  #cards-sev .sevcard:nth-child(2) { animation-delay: .05s; }
+  #cards-sev .sevcard:nth-child(3) { animation-delay: .1s; }
+  #cards-sev .sevcard:nth-child(4) { animation-delay: .15s; }
+  #cards-sev .sevcard:nth-child(5) { animation-delay: .2s; }
+  .tabla-wrap tr.click { animation: lnin .2s ease-out; }
+  /* El módulo que está ejecutándose late. */
+  .mod.ejecutando { animation: pulso 1.1s ease-in-out infinite; border-color: var(--cyan) !important; }
+  /* Botón de pentest con brillo rojo pulsante. */
+  #btn-ia-atacar:not(:disabled) { animation: glow 2s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .consola .ln, .prog-fill, .consola .run, .ia-box, .sevcard, .tabla-wrap tr.click,
+    .mod.ejecutando, #btn-ia-atacar { animation: none !important; }
+  }
+  #detalle .bloque b { color: var(--cyan); }
+  .oculto { display: none !important; }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-in">
+    <div class="marca-logo">SA</div>
+    <div>
+      <h1>Herramienta de Auditoria de Seguridad</h1>
+      <p>Cooperativa Nuevo Amanecer, R.L.  ·  Escaneo automatizado OWASP Top 10  ·  Uso educativo</p>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab activa" id="tab-aud" onclick="cambiarVista('auditoria')">Auditoría</div>
+  <div class="tab" id="tab-ia" onclick="cambiarVista('ia')">Análisis con IA <span class="pill">Gemini</span></div>
+</div>
+
+<main id="vista-auditoria">
+  <!-- PASO 1 -->
+  <section class="card">
+    <div class="head">
+      <div class="paso">1</div>
+      <div><h2>Objetivo</h2>
+        <div class="sub">Escribe la direccion del sitio que vas a auditar.</div></div>
+    </div>
+    <div class="dos-col">
+      <div>
+        <label class="campo" for="url">Direccion del sitio (URL) <span class="hint">— debe empezar por http:// o https://</span></label>
+        <input type="url" id="url" placeholder="https://mi-objetivo.com">
+      </div>
+      <div>
+        <label class="campo" for="nombre">Nombre para identificar la auditoria</label>
+        <input type="text" id="nombre" value="Auditoria SAG">
+      </div>
+    </div>
+    <div class="auth" id="auth-box">
+      <label class="switch"><input type="checkbox" id="autorizado"><span class="slider"></span></label>
+      <div class="txt">Confirmo que tengo autorizacion para auditar este sitio.
+        <small>Obligatorio: la auditoria no inicia sin esta confirmacion (RF-02).</small></div>
+    </div>
+  </section>
+
+  <!-- PASO 2 -->
+  <section class="card">
+    <div class="head">
+      <div class="paso">2</div>
+      <div><h2>Tipo de escaneo</h2>
+        <div class="sub">Elige un perfil. Con esto es suficiente para empezar.</div></div>
+    </div>
+    <div class="guia">Si tienes dudas, deja marcado <b>Escaneo rapido</b>: solo revisa el sitio sin enviar
+      nada intrusivo. Puedes ajustar los modulos uno por uno mas abajo si lo necesitas.</div>
+
+    <div class="seg" id="perfiles"></div>
+
+    <details class="mods" id="mods">
+      <summary><span class="chev"></span> Ajustar modulos manualmente (opcional)</summary>
+      <div id="lista-modulos">Cargando modulos...</div>
+    </details>
+
+    <details class="avz">
+      <summary><span class="chev"></span> Opciones avanzadas (opcional)</summary>
+      <div class="dos-col" style="margin-top:12px;">
+        <div>
+          <label class="campo" for="max_paginas">Paginas maximas a rastrear</label>
+          <input type="number" id="max_paginas" value="25" min="1" max="200">
+        </div>
+        <div>
+          <label class="campo" for="timeout">Tiempo maximo por modulo (segundos)</label>
+          <input type="number" id="timeout" value="120" min="10" max="1800">
+        </div>
+      </div>
+      <div class="auth" style="margin-top:16px;">
+        <label class="switch"><input type="checkbox" id="autenticar"><span class="slider"></span></label>
+        <div class="txt">Escaneo autenticado: iniciar sesion antes de escanear.
+          <small>Las credenciales se usan solo para el login; no se guardan.</small></div>
+      </div>
+      <div class="dos-col" style="margin-top:12px;">
+        <div><label class="campo" for="login_url">Direccion de login</label>
+          <input type="text" id="login_url" placeholder="https://.../login (o la del sitio)"></div>
+        <div><label class="campo" for="login_intentos">Intentos de login a probar (tope 5)</label>
+          <input type="number" id="login_intentos" value="4" min="1" max="5"></div>
+        <div><label class="campo" for="login_user_val">Usuario / correo</label>
+          <input type="text" id="login_user_val" placeholder="usuario de prueba"></div>
+        <div><label class="campo" for="login_pass_val">Contrasena</label>
+          <input type="password" id="login_pass_val" placeholder="contrasena"></div>
+        <div><label class="campo" for="login_usuario">Nombre del campo de usuario</label>
+          <input type="text" id="login_usuario" value="username"></div>
+        <div><label class="campo" for="login_password">Nombre del campo de contrasena</label>
+          <input type="text" id="login_password" value="password"></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- PASO 3: Ejecucion + consola -->
+  <section class="card">
+    <div class="head">
+      <div class="paso">3</div>
+      <div><h2>Ejecucion</h2>
+        <div class="sub">Inicia la auditoria y observa cada paso en la consola.</div></div>
+    </div>
+    <div class="accion">
+      <button class="btn-run" id="btn-iniciar"><span class="spinner" id="spinner"></span><span id="btn-txt">Iniciar auditoria</span></button>
+      <div class="prog-wrap">
+        <div class="prog-bar"><div class="prog-fill" id="progreso"></div></div>
+        <div class="prog-txt" id="estado-txt">Listo para comenzar.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="term-cab">
+        <span class="punto r"></span><span class="punto y"></span><span class="punto g"></span>
+        <span class="tit">consola de ejecucion</span>
+      </div>
+      <div class="consola" id="consola"><span class="ln dim">// La consola mostrara cada paso de la auditoria en tiempo real.</span><span class="ln"><span class="cursor">_</span></span></div>
+    </div>
+  </section>
+
+  <!-- PASO 4: Resultados -->
+  <section class="card">
+    <div class="head">
+      <div class="paso">4</div>
+      <div><h2>Resultados</h2>
+        <div class="sub">Resumen, hallazgos y descarga del informe en PDF o Excel.</div></div>
+    </div>
+
+    <div id="sin-resultados" class="vacio">Aun no se ha ejecutado ninguna auditoria.</div>
+
+    <div id="panel-resultados" class="oculto">
+      <div class="cards-sev" id="cards-sev"></div>
+      <p class="riesgo-linea" id="riesgo-linea"></p>
+      <div class="desc-bar">
+        <button class="btn-desc" id="btn-pdf" disabled><span class="ic"></span> Descargar informe PDF</button>
+        <button class="btn-desc" id="btn-excel" disabled><span class="ic"></span> Descargar Excel</button>
+      </div>
+      <div class="filtros" id="filtros">
+        <span class="etq">Filtrar:</span>
+        <button class="fbtn activo" data-sev="Todas">Todas</button>
+        <button class="fbtn" data-sev="Critica">Criticas</button>
+        <button class="fbtn" data-sev="Alta">Altas</button>
+        <button class="fbtn" data-sev="Media">Medias</button>
+        <button class="fbtn" data-sev="Baja">Bajas</button>
+        <button class="fbtn" data-sev="Informativa">Informativas</button>
+      </div>
+      <div class="tabla-wrap">
+        <table id="tabla">
+          <thead><tr><th>Severidad</th><th>Hallazgo</th><th>Categoria OWASP</th><th>Modulo</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div id="tabla-vacia" class="vacio oculto">No hay hallazgos con este filtro.</div>
+      <div id="detalle"></div>
+    </div>
+  </section>
+</main>
+
+<main id="vista-ia" hidden>
+  <section class="card">
+    <div class="head">
+      <div class="paso">IA</div>
+      <div><h2>Análisis y pentest con IA</h2>
+        <div class="sub">Analiza la última auditoría, propone pruebas y ejecuta un pentest.</div></div>
+    </div>
+
+    <div id="ia_estado_aud" class="ia-esperando">Ejecuta primero una auditoría en la pestaña «Auditoría».</div>
+
+    <div class="accion" style="margin-top:18px">
+      <button class="btn-run" id="btn-ia-analizar" onclick="iaAnalizar()" disabled>Analizar hallazgos con IA</button>
+      <button class="btn-desc" id="btn-ia-orquestar" onclick="iaOrquestar()" disabled>Pruebas no destructivas</button>
+      <button class="btn-desc" id="btn-ia-atacar" onclick="iaAtacar()" disabled style="border-color:var(--critico);color:var(--critico)">⚡ Pentest activo</button>
+    </div>
+    <div id="ia_error" class="ia-esperando" style="color:var(--critico); margin-top:10px"></div>
+  </section>
+
+  <section class="card" id="ia-consola-card" hidden>
+    <div class="head"><div class="paso">⚡</div><div><h2>Pentest en vivo</h2>
+      <div class="sub">La IA recorre el objetivo e intenta vulnerarlo, paso a paso.</div></div></div>
+    <div class="consola" id="ia_consola"><span class="ln dim">// La actividad del pentest aparecerá aquí.</span></div>
+  </section>
+
+  <section class="card" id="ia-resultados" hidden>
+    <div class="head"><div class="paso">✦</div><div><h2>Resultado del análisis IA</h2></div></div>
+    <div id="ia_salida"></div>
+  </section>
+</main>
+
+<script>
+let MODULOS = [], PERFILES = {}, auditId = null, hallazgos = [], filtroSev = 'Todas';
+const $ = id => document.getElementById(id);
+
+$('autorizado').addEventListener('change', e => $('auth-box').classList.toggle('on', e.target.checked));
+
+// ---- Consola estilo terminal ----
+function ahora() { const d = new Date(); return d.toTimeString().slice(0, 8); }
+function limpiarConsola() { $('consola').innerHTML = ''; }
+function log(texto, tipo) {
+  const cons = $('consola');
+  const cursor = cons.querySelector('.cursor');
+  if (cursor) cursor.parentElement.remove();
+  const ln = document.createElement('span');
+  ln.className = 'ln';
+  ln.innerHTML = `<span class="ts">[${ahora()}]</span> <span class="${tipo || 'info'}"></span>`;
+  ln.lastChild.textContent = texto;
+  cons.appendChild(ln);
+  const fin = document.createElement('span');
+  fin.className = 'ln'; fin.innerHTML = '<span class="cursor">_</span>';
+  cons.appendChild(fin);
+  cons.scrollTop = cons.scrollHeight;
+}
+
+async function cargarModulos() {
+  try {
+    const r = await fetch('/api/modulos');
+    const data = await r.json();
+    MODULOS = data.modulos; PERFILES = data.perfiles;
+    renderPerfiles(); renderModulos();
+  } catch (e) { $('lista-modulos').textContent = 'No se pudieron cargar los modulos.'; }
+}
+
+function renderPerfiles() {
+  const cont = $('perfiles'); cont.innerHTML = '';
+  let primero = null;
+  for (const [clave, p] of Object.entries(PERFILES)) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.innerHTML = `${p.nombre}<span class="p-desc"></span>`;
+    b.querySelector('.p-desc').textContent = p.descripcion || '';
+    b.onclick = () => aplicarPerfil(clave, b);
+    cont.appendChild(b);
+    if (!primero) primero = b;
+  }
+  // Preseleccionar el primer perfil (rapido) para facilitar el uso.
+  if (primero) primero.click();
+}
+
+function aplicarPerfil(clave, boton) {
+  const p = PERFILES[clave];
+  document.querySelectorAll('.seg button').forEach(x => x.classList.remove('activo'));
+  boton.classList.add('activo');
+  MODULOS.forEach(m => setSel(m.nombre, p.modulos.includes(m.nombre)));
+}
+
+function setSel(nombre, valor) {
+  const t = $('tile-' + nombre);
+  if (!t || t.classList.contains('off')) return;
+  t.classList.toggle('sel', valor);
+  t.querySelector('.marca').textContent = valor ? 'x' : '';
+}
+function estaSel(nombre) { const t = $('tile-' + nombre); return t && t.classList.contains('sel'); }
+
+function renderModulos() {
+  const cont = $('lista-modulos'); cont.innerHTML = '';
+  let grupo = '', grid = null;
+  MODULOS.forEach(m => {
+    if (m.tipo !== grupo) {
+      grupo = m.tipo;
+      const et = document.createElement('div'); et.className = 'grupo-etq'; et.textContent = m.tipo;
+      cont.appendChild(et);
+      grid = document.createElement('div'); grid.className = 'mod-grid'; cont.appendChild(grid);
+    }
+    const disp = m.disponible;
+    const t = document.createElement('div');
+    t.className = 'tile' + (disp ? ' sel' : ' off'); t.id = 'tile-' + m.nombre;
+    t.innerHTML =
+      `<div class="fila1"><span class="marca">${disp ? 'x' : ''}</span>
+        <span class="nom">${m.nombre}</span></div>
+       <div class="desc">${m.descripcion}</div>
+       ${disp ? '' : `<div class="req">requiere ${m.requiere_binario}</div>`}`;
+    if (disp) t.onclick = () => setSel(m.nombre, !estaSel(m.nombre));
+    grid.appendChild(t);
+  });
+}
+
+function correr(activo) {
+  $('btn-iniciar').disabled = activo;
+  $('spinner').style.display = activo ? 'inline-block' : 'none';
+  $('btn-txt').textContent = activo ? 'Auditando...' : 'Iniciar auditoria';
+}
+
+async function iniciar() {
+  const url = $('url').value.trim();
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    alert('La direccion debe empezar por http:// o https://'); $('url').focus(); return;
+  }
+  if (!$('autorizado').checked) { alert('Debes activar la autorizacion para auditar el sitio (RF-02).'); return; }
+
+  const modulos = {}; let alguno = false;
+  MODULOS.forEach(m => { const val = estaSel(m.nombre); modulos[m.nombre] = !!val; if (val) alguno = true; });
+  if (!alguno) { alert('Selecciona al menos un modulo o elige un perfil.'); return; }
+
+  const cfg = {
+    url, nombre: $('nombre').value || 'Auditoria', autorizado: true, modulos,
+    opciones: {
+      crawler_max_paginas: parseInt($('max_paginas').value) || 25,
+      timeout_por_modulo: parseInt($('timeout').value) || 120,
+      login_url: $('login_url').value.trim() || null,
+      login_campo_usuario: $('login_usuario').value || 'username',
+      login_campo_password: $('login_password').value || 'password',
+      login_max_intentos: parseInt($('login_intentos').value) || 4,
+      autenticar: $('autenticar').checked,
+      login_usuario: $('login_user_val').value.trim() || null,
+      login_password: $('login_pass_val').value || null,
+    }
+  };
+
+  $('panel-resultados').classList.add('oculto');
+  $('sin-resultados').classList.remove('oculto');
+  $('sin-resultados').textContent = 'Ejecutando auditoria...';
+  $('tbody').innerHTML = ''; $('detalle').style.display = 'none';
+  correr(true);
+  $('progreso').style.width = '0'; $('estado-txt').textContent = 'Iniciando...';
+
+  limpiarConsola();
+  log('$ auditar ' + url, 'cmd');
+  log('objetivo: ' + (cfg.nombre), 'dim');
+  const nsel = Object.values(modulos).filter(Boolean).length;
+  log('> preparando ' + nsel + ' modulo(s) de deteccion...', 'info');
+
+  let resp;
+  try {
+    resp = await fetch('/api/auditoria/iniciar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg),
+    });
+  } catch (e) { log('x no se pudo contactar el servidor', 'err'); correr(false); return; }
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ detail: 'Error' }));
+    log('x ' + (err.detail || 'error al iniciar'), 'err');
+    correr(false); $('estado-txt').textContent = 'Listo.';
+    $('sin-resultados').textContent = 'Aun no se ha ejecutado ninguna auditoria.';
+    return;
+  }
+  const { audit_id } = await resp.json();
+  auditId = audit_id;
+  escuchar(audit_id);
+}
+
+let totalModulos = 0, completados = 0;
+function escuchar(id) {
+  const es = new EventSource(`/api/auditoria/${id}/eventos`);
+  es.onmessage = ev => {
+    const e = JSON.parse(ev.data);
+    if (e.tipo === 'login_inicio') { log('> iniciando sesion en el objetivo...', 'run'); $('estado-txt').textContent = 'Iniciando sesion...'; }
+    else if (e.tipo === 'login_fin') {
+      log(e.exito ? '  sesion iniciada. ' + (e.evidencia || '') : '  login sin exito: ' + (e.evidencia || '') + ' (se escanea sin autenticar)', e.exito ? 'ok' : 'err');
+    }
+    else if (e.tipo === 'inicio') {
+      totalModulos = e.modulos.length; completados = 0;
+      log('> se ejecutaran ' + totalModulos + ' modulo(s): ' + e.modulos.join(', '), 'info');
+      $('estado-txt').textContent = `Ejecutando 0/${totalModulos} modulo(s)...`;
+    }
+    else if (e.tipo === 'modulo_inicio') log('[' + e.nombre + '] ejecutando...', 'run');
+    else if (e.tipo === 'modulo_log') {
+      const esHallazgo = /^\s*[!+]/.test(e.mensaje);
+      log('    ' + e.mensaje, esHallazgo ? 'ok' : 'dim');
+    }
+    else if (e.tipo === 'modulo_fin') {
+      log('[' + e.nombre + '] completado - ' + (e.hallazgos || 0) + ' hallazgo(s)', 'ok'); avanzar();
+    }
+    else if (e.tipo === 'modulo_error') { log('[' + e.nombre + '] ERROR: ' + (e.error || 'desconocido') + ' -> se omite y continua (RNF-02)', 'err'); avanzar(); }
+    else if (e.tipo === 'fin') { log('> consolidando hallazgos y generando informe (PDF, Excel)...', 'info'); $('estado-txt').textContent = 'Generando informe...'; }
+    else if (e.tipo === 'completado') { finalizar(e); es.close(); }
+    else if (e.tipo === 'abortado') {
+      log('x auditoria abortada: ' + e.error, 'err');
+      $('estado-txt').textContent = 'Auditoria abortada.';
+      $('sin-resultados').textContent = e.error; correr(false); es.close();
+    }
+  };
+  es.onerror = () => { es.close(); correr(false); };
+}
+
+function avanzar() {
+  completados++;
+  $('progreso').style.width = (100 * completados / Math.max(totalModulos, 1)) + '%';
+  $('estado-txt').textContent = `Ejecutando ${completados}/${totalModulos} modulo(s)...`;
+}
+
+const SEVS = ['Critica', 'Alta', 'Media', 'Baja', 'Informativa'];
+
+function finalizar(e) {
+  hallazgos = e.hallazgos;
+  const r = e.resumen;
+  log('> auditoria finalizada: ' + r.total + ' hallazgo(s), riesgo promedio ' + r.riesgo_promedio + '/25', 'done');
+  if (e.pdf_disponible) log('  informe PDF listo para descargar', 'ok');
+  if (e.excel_disponible) log('  informe Excel listo para descargar', 'ok');
+
+  const conteo = { Critica: 0, Alta: 0, Media: 0, Baja: 0, Informativa: 0 };
+  hallazgos.forEach(h => { if (conteo[h.severidad] !== undefined) conteo[h.severidad]++; });
+  const cards = $('cards-sev'); cards.innerHTML = '';
+  SEVS.forEach(s => {
+    const c = conteo[s];
+    const div = document.createElement('div');
+    div.className = 'sevcard ' + s + (c === 0 ? ' apagada' : '');
+    div.innerHTML = `<div class="n">${c}</div><div class="t">${s}</div>`;
+    cards.appendChild(div);
+  });
+  $('riesgo-linea').innerHTML =
+    `Total de hallazgos: <b>${r.total}</b> &nbsp;·&nbsp; Riesgo promedio: <b>${r.riesgo_promedio} / 25</b>`;
+
+  filtroSev = 'Todas';
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.toggle('activo', b.dataset.sev === 'Todas'));
+  pintarTabla();
+
+  $('sin-resultados').classList.add('oculto');
+  $('panel-resultados').classList.remove('oculto');
+  $('estado-txt').textContent = 'Auditoria finalizada.';
+  $('progreso').style.width = '100%';
+  correr(false);
+
+  const bp = $('btn-pdf'), bx = $('btn-excel');
+  bp.disabled = !e.pdf_disponible; bx.disabled = !e.excel_disponible;
+  bp.onclick = () => !bp.disabled && window.open(`/api/auditoria/${auditId}/informe.pdf`, '_blank');
+  bx.onclick = () => !bx.disabled && window.open(`/api/auditoria/${auditId}/informe.excel`, '_blank');
+  if (!e.pdf_disponible) bp.title = 'PDF no disponible (falta la libreria fpdf2).';
+  if (!e.excel_disponible) bx.title = 'Excel no disponible (falta la libreria openpyxl).';
+
+  $('panel-resultados').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Habilitar la pestaña de IA con esta auditoria como fuente.
+  habilitarIA(r);
+}
+
+function pintarTabla() {
+  const tbody = $('tbody'); tbody.innerHTML = '';
+  const visibles = hallazgos.filter(h => filtroSev === 'Todas' || h.severidad === filtroSev);
+  visibles.forEach(h => {
+    const i = hallazgos.indexOf(h);
+    const tr = document.createElement('tr'); tr.className = 'click';
+    tr.innerHTML = `<td><span class="badge ${h.severidad}">${h.severidad}</span></td>
+      <td>${escapar(h.titulo)}</td><td>${escapar(h.categoria)}</td><td>${escapar(h.modulo)}</td>`;
+    tr.onclick = () => mostrarDetalle(i);
+    tbody.appendChild(tr);
+  });
+  const vacia = visibles.length === 0;
+  $('tabla').classList.toggle('oculto', vacia);
+  $('tabla-vacia').classList.toggle('oculto', !vacia);
+  $('detalle').style.display = 'none';
+}
+
+function mostrarDetalle(i) {
+  const h = hallazgos[i]; const d = $('detalle');
+  d.style.display = 'block';
+  d.innerHTML =
+    `<h3>${escapar(h.titulo)}</h3>
+     <div class="meta">
+       <span class="kv"><span class="badge ${h.severidad}">${h.severidad}</span></span>
+       <span class="kv">CVSS: ${escapar(String(h.cvss))}</span>
+       <span class="kv">Riesgo: ${escapar(String(h.nivel_riesgo))}</span>
+       <span class="kv">Modulo: ${escapar(h.modulo)}</span>
+     </div>
+     <div class="bloque"><b>Ubicacion:</b> ${escapar(h.ubicacion || 'N/D')}</div>
+     <div class="bloque"><b>Evidencia:</b> ${escapar(h.evidencia)}</div>
+     <div class="bloque"><b>Recomendacion:</b> ${escapar(h.recomendacion)}</div>`;
+  d.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function escapar(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+
+document.querySelectorAll('.fbtn').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.fbtn').forEach(x => x.classList.remove('activo'));
+    b.classList.add('activo'); filtroSev = b.dataset.sev; pintarTabla();
+  };
+});
+
+$('btn-iniciar').onclick = iniciar;
+cargarModulos();
+
+// ============================ Pestaña IA (Gemini) ============================
+let iaAuditId = null;
+
+function cambiarVista(v) {
+  const esAud = v === 'auditoria';
+  $('vista-auditoria').hidden = !esAud;
+  $('vista-ia').hidden = esAud;
+  $('tab-aud').classList.toggle('activa', esAud);
+  $('tab-ia').classList.toggle('activa', !esAud);
+}
+
+function habilitarIA(resumen) {
+  iaAuditId = auditId;
+  $('ia_estado_aud').innerHTML = `Lista: <b>${$('nombre').value || 'Auditoria'}</b> — ${resumen.total} hallazgo(s).`;
+  $('ia_estado_aud').style.color = 'var(--ok)';
+  $('btn-ia-analizar').disabled = false;
+  $('btn-ia-orquestar').disabled = false;
+  $('btn-ia-atacar').disabled = false;
+}
+
+function iaCuerpo() {
+  // La API key y el modelo se resuelven en el backend (entorno / config.yaml).
+  return { audit_id: iaAuditId };
+}
+
+function iaOcupado(ocupado, cual) {
+  $('btn-ia-analizar').disabled = ocupado || !iaAuditId;
+  $('btn-ia-orquestar').disabled = ocupado || !iaAuditId;
+  $('btn-ia-atacar').disabled = ocupado || !iaAuditId;
+  $('ia_error').textContent = '';
+  if (ocupado) {
+    $('ia-resultados').hidden = false;
+    $('ia_salida').innerHTML = `<div class="ia-esperando">Consultando a Gemini (${cual})… esto puede tardar unos segundos.</div>`;
+  }
+}
+
+async function iaLlamar(ruta) {
+  const r = await fetch(ruta, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(iaCuerpo()),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.detail || ('Error HTTP ' + r.status));
+  return data;
+}
+
+function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function lista(arr) { return (arr || []).map(x => `<li>${esc(x)}</li>`).join('') || '<li class="ia-esperando">—</li>'; }
+
+async function iaAnalizar() {
+  if (!iaAuditId) return;
+  iaOcupado(true, 'análisis');
+  try {
+    const data = await iaLlamar('/api/ia/analizar');
+    const a = data.analisis || {};
+    let html = '';
+    if (data.pdf) html += `<div style="margin-bottom:14px"><button class="btn-desc" onclick="window.open('/api/ia/${iaAuditId}/analisis.pdf','_blank')">⬇ Descargar análisis en PDF</button></div>`;
+    html += `<div class="ia-box"><h3>Resumen ejecutivo</h3><div>${esc(a.resumen_ejecutivo)}</div></div>`;
+    html += `<div class="ia-box"><h3>Correlación de hallazgos</h3><ul>${lista(a.correlaciones)}</ul></div>`;
+    let rutas = (a.rutas_ataque || []).map(x =>
+      `<div class="ia-ruta"><div class="grav">${esc(x.gravedad || '')}</div>
+       <b>${esc(x.escenario || '')}</b>
+       <ul>${lista(x.pasos)}</ul>
+       <div class="ia-esperando">Hallazgos: ${(x.hallazgos_implicados || []).map(esc).join(', ')}</div></div>`).join('');
+    html += `<div class="ia-box"><h3>Rutas de ataque probables</h3>${rutas || '<div class="ia-esperando">—</div>'}</div>`;
+    let plan = (a.plan_remediacion || []).map(p =>
+      `<li><b>[${esc(p.prioridad || '')}]</b> ${esc(p.accion || '')} <span class="ia-esperando">(esfuerzo: ${esc(p.esfuerzo || '—')})</span></li>`).join('');
+    html += `<div class="ia-box"><h3>Plan de remediación priorizado</h3><ul>${plan || '<li>—</li>'}</ul></div>`;
+    html += `<div class="ia-box"><h3>Conclusión</h3><div>${esc(a.conclusion)}</div></div>`;
+    $('ia_salida').innerHTML = html;
+  } catch (err) {
+    $('ia_salida').innerHTML = '';
+    $('ia_error').textContent = 'x ' + err.message;
+  } finally {
+    iaOcupado(false);
+  }
+}
+
+// ---- Pentest activo guiado por IA ----
+let iaAttackId = null;
+function iaLog(texto, tipo) {
+  const cons = $('ia_consola');
+  const ln = document.createElement('span');
+  ln.className = 'ln';
+  const t = new Date().toTimeString().slice(0, 8);
+  ln.innerHTML = `<span class="ts">[${t}]</span> <span class="${tipo || 'info'}">${esc(texto)}</span>`;
+  cons.appendChild(ln);
+  cons.scrollTop = cons.scrollHeight;
+}
+
+async function iaAtacar() {
+  if (!iaAuditId) return;
+  if (!confirm('El modo Pentest activo hará que la IA INTENTE vulnerar el objetivo autorizado. Úsalo solo contra tu propio sistema. ¿Continuar?')) return;
+  iaOcupado(true, 'pentest activo');
+  $('ia-consola-card').hidden = false;
+  $('ia_consola').innerHTML = '';
+  $('ia_salida').innerHTML = '<div class="ia-esperando">Pentest en curso…</div>';
+  iaLog('> iniciando pentest guiado por IA…', 'run');
+  let id;
+  try {
+    const r = await fetch('/api/ia/atacar/iniciar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(iaCuerpo()),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.detail || ('Error HTTP ' + r.status));
+    id = data.attack_id; iaAttackId = id;
+  } catch (err) {
+    $('ia_error').textContent = 'x ' + err.message; iaOcupado(false); return;
+  }
+
+  const es = new EventSource(`/api/ia/atacar/${id}/eventos`);
+  es.onmessage = ev => {
+    const e = JSON.parse(ev.data);
+    if (e.tipo === 'inicio') iaLog('objetivo: ' + e.objetivo, 'dim');
+    else if (e.tipo === 'fase') iaLog('» ' + e.texto, 'cmd');
+    else if (e.tipo === 'ia_omitida') iaLog('IA omitida en esta ronda (' + e.motivo + '); continúa la batería del sistema', 'dim');
+    else if (e.tipo === 'iteracion') iaLog('── ronda IA ' + e.n + ' ──', 'cmd');
+    else if (e.tipo === 'razonamiento') iaLog('IA: ' + e.texto, 'info');
+    else if (e.tipo === 'accion') {
+      const marca = e.exito ? '✔ VULNERABLE' : '·';
+      iaLog(`${marca} [${e.accion}] ${e.objetivo} → ${e.evidencia}`, e.exito ? 'done' : 'dim');
+    }
+    else if (e.tipo === 'descartada') iaLog(`✗ acción descartada (${e.motivo})`, 'err');
+    else if (e.tipo === 'error_ia') iaLog('error IA: ' + e.error, 'err');
+    else if (e.tipo === 'sin_acciones') iaLog('la IA no propuso más acciones', 'dim');
+    else if (e.tipo === 'terminar_ia') iaLog('la IA decidió finalizar', 'dim');
+    else if (e.tipo === 'fin') iaLog('> pentest finalizado: ' + e.exitos + ' vulnerabilidad(es) confirmada(s)', 'done');
+    else if (e.tipo === 'completado') { pintarReportePentest(e); es.close(); iaOcupado(false); }
+    else if (e.tipo === 'abortado') { iaLog('x abortado: ' + e.error, 'err'); $('ia_error').textContent = 'x ' + e.error; es.close(); iaOcupado(false); }
+  };
+  es.onerror = () => { es.close(); iaOcupado(false); };
+}
+
+function pintarReportePentest(d) {
+  const r = d.reporte || {};
+  const nuevos = d.hallazgos_nuevos || [];
+  let html = '';
+  if (d.pdf) html += `<div style="margin-bottom:14px"><button class="btn-desc" onclick="window.open('/api/ia/atacar/${iaAttackId}/pdf','_blank')">⬇ Descargar informe de pentest en PDF</button></div>`;
+  html += `<div class="ia-box"><h3>Reporte del pentest (IA)</h3>
+    <div><b>Riesgo global:</b> ${esc(r.riesgo_global || '—')}</div>
+    <div style="margin-top:6px">${esc(r.resumen || '')}</div></div>`;
+  html += `<div class="ia-box"><h3>✔ Lo que la IA logró vulnerar</h3><ul>${lista(r.logrado)}</ul></div>`;
+  html += `<div class="ia-box"><h3>✗ Lo que resistió</h3><ul>${lista(r.no_logrado)}</ul></div>`;
+  html += `<div class="ia-box"><h3>Vulnerabilidades confirmadas (${nuevos.length})</h3>` +
+    (nuevos.length ? '<ul>' + nuevos.map(h => `<li><b>[${esc(h.severidad)}]</b> ${esc(h.titulo)} <span class="ia-esperando">— ${esc(h.ubicacion)}</span></li>`).join('') + '</ul>'
+      : '<div class="ia-esperando">La IA no logró vulnerar el objetivo (buen resultado de seguridad).</div>') + `</div>`;
+  html += `<div class="ia-box"><h3>Recomendaciones</h3><ul>${lista(r.recomendaciones)}</ul></div>`;
+  $('ia_salida').innerHTML = html;
+  $('ia-resultados').hidden = false;
+}
+
+async function iaOrquestar() {
+  if (!iaAuditId) return;
+  iaOcupado(true, 'propuesta y ejecución de pruebas');
+  try {
+    const d = await iaLlamar('/api/ia/orquestar');
+    let html = '';
+    const obs = (d.propuesta && d.propuesta.observaciones) || '';
+    if (obs) html += `<div class="ia-box"><h3>Plan propuesto por la IA</h3><div>${esc(obs)}</div></div>`;
+    html += `<div class="ia-box"><h3>Módulos ejecutados (validados por el sistema)</h3>
+      <div>${(d.modulos_ejecutados || []).map(m => `<span class="badge-modulo">${esc(m)}</span>`).join('') || '<span class="ia-esperando">Ninguno</span>'}</div>`;
+    if ((d.modulos_descartados || []).length)
+      html += `<div style="margin-top:8px" class="ia-esperando">Descartados por no estar en la lista blanca: ${(d.modulos_descartados).map(esc).join(', ')}</div>`;
+    html += `</div>`;
+    const nuevos = d.hallazgos_nuevos || [];
+    html += `<div class="ia-box"><h3>Hallazgos nuevos (${nuevos.length})</h3>` +
+      (nuevos.length ? '<ul>' + nuevos.map(h => `<li><b>[${esc(h.severidad)}]</b> ${esc(h.titulo)} <span class="ia-esperando">— ${esc(h.modulo)}</span></li>`).join('') + '</ul>'
+        : '<div class="ia-esperando">No se encontraron hallazgos adicionales.</div>') + `</div>`;
+    const v = d.veredicto || {};
+    html += `<div class="ia-box"><h3>Veredicto final de la IA</h3>
+      <div><b>Riesgo global:</b> ${esc(v.riesgo_global || '—')}</div>
+      <div style="margin-top:6px">${esc(v.veredicto || '')}</div>
+      <h3 style="margin-top:12px">Hallazgos clave</h3><ul>${lista(v.hallazgos_clave)}</ul>
+      <h3 style="margin-top:12px">Siguientes pasos</h3><ul>${lista(v.siguientes_pasos)}</ul></div>`;
+    $('ia_salida').innerHTML = html;
+  } catch (err) {
+    $('ia_salida').innerHTML = '';
+    $('ia_error').textContent = 'x ' + err.message;
+  } finally {
+    iaOcupado(false);
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Salidas de la herramienta (no versionar evidencias ni logs)
+logs/*.log
+reportes_generados/*.json
+reportes_generados/*.html
+reportes_generados/*.pdf
+
+# Configuracion local con objetivos reales / autorizacion
+config.local.yaml
+config.yaml
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

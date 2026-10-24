@@ -1,0 +1,19 @@
+# Dependencias del nucleo
+requests>=2.31.0    # tambien usado por la integracion con Gemini (API REST)
+PyYAML>=6.0.1
+
+# Interfaz web (FastAPI + servidor uvicorn)
+fastapi>=0.110.0
+uvicorn>=0.27.0
+
+# Generacion de informes (RF-14): PDF y Excel, en Python puro (sin dependencias
+# del sistema operativo, funcionan directamente en Windows).
+fpdf2>=2.7.0          # informe PDF
+openpyxl>=3.1.0       # informe Excel (.xlsx)
+
+# Rastreo de aplicaciones modernas (SPA con JavaScript) - modulo crawler_js.
+# Tras instalar, descargar el navegador:  python -m playwright install chromium
+playwright>=1.40.0
+
+# Dependencia opcional de fases siguientes:
+# cryptography>=42.0   # analisis de certificados TLS/SSL (RF-07)
